@@ -1,9 +1,13 @@
 package demo.datasource;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.JoinFormula;
+
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "accounts", schema = "transfer")
+@Table(name = "ACCOUNTS",
+        uniqueConstraints = { @UniqueConstraint(columnNames = { "ID" }) })
 public class Account {
 
     private String id;
@@ -13,7 +17,9 @@ public class Account {
     private double balance;
 
     @Id
-    @Column(name = "id", nullable = false, insertable = true, updatable = true, length = 36)
+    @GeneratedValue(generator = "uuid")
+    @GenericGenerator(name = "uuid", strategy = "uuid2")
+    @Column(name = "ID", nullable = false, insertable = false, updatable = false, length = 36)
     public String getId() {
         return id;
     }
@@ -23,7 +29,7 @@ public class Account {
     }
 
     @Basic
-    @Column(name = "first_name", nullable = false, insertable = true, updatable = true, length = 100)
+    @Column(name = "FIRST_NAME", nullable = false, insertable = true, updatable = true, length = 100)
     public String getFirstName() {
         return firstName;
     }
@@ -33,7 +39,7 @@ public class Account {
     }
 
     @Basic
-    @Column(name = "last_name", nullable = true, insertable = true, updatable = true, length = 100)
+    @Column(name = "LAST_NAME", nullable = true, insertable = true, updatable = true, length = 100)
     public String getLastName() {
         return lastName;
     }
@@ -43,7 +49,7 @@ public class Account {
     }
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_when", nullable = false, insertable = true, updatable = true)
+    @Column(name = "CREATED_WHEN", nullable = false, insertable = true, updatable = true)
     public Date getCreatedWhen() {
         return createdWhen;
     }
@@ -53,7 +59,7 @@ public class Account {
     }
 
     @Basic
-    @Column(name = "balance", nullable = false, insertable = true, updatable = true)
+    @Column(name = "BALANCE", nullable = false, insertable = true, updatable = true)
     public double getBalance() {
         return balance;
     }
@@ -62,4 +68,13 @@ public class Account {
         this.balance = balance;
     }
 
+    @Override
+    public String toString() {
+        return "Account: " + '\n' +
+                "id = " + getId() + '\n' +
+                "firstName = " + getFirstName() + '\n' +
+                "lastName = " + getLastName() + '\n' +
+                "created_when = " + getCreatedWhen() + '\n' +
+                "balance = " + getBalance() + '\n';
+    }
 }

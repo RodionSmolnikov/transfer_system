@@ -1,23 +1,28 @@
 package demo.datasource;
 
+import java.sql.SQLException;
+import java.util.Date;
+import java.util.List;
+
 public interface DBManager {
 
-    /**
-     * Create rows in queue_requests and transfer_operation tables
-     */
-    void queueBalanceChangeRequest(QueueRequest request);
+    String updateAccount(Account account) throws SQLException;
 
-    void queueAccountChangeRequest(QueueRequest request);
+    String addAccount(Account account) throws SQLException;
 
-    /**
-     * Create db scheme
-     */
-    void initTables();
+    String deleteAccount(String accountId) throws SQLException;
 
-    /**
-     * @param requestNumber number in queue_requests table
-     * @return response field for the request with requestNumder
-     */
-    String getResponceForQueueNumber(int requestNumber);
+    Account getAccountById(String accountId) throws SQLException;
 
+    String procceedTransfer(TransferOperation operation) throws SQLException;
+
+    TransferOperation getTransferOperationById(String operationId) throws SQLException;
+
+    List<TransferOperation> getTransferOperationsByDates(Date after, Date before, String accountID) throws SQLException;
+
+    List<TransferOperation> getTransferOperationsSinceDate(Date after, String accountID) throws SQLException;
+
+    String procceedTopUp(TransferOperation operation) throws SQLException;
+
+    String procceedWithdraw (TransferOperation operation) throws SQLException;
 }

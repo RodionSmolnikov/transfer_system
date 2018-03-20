@@ -1,5 +1,7 @@
 package demo.datasource;
 
+import org.hibernate.annotations.GenericGenerator;
+
 import javax.persistence.*;
 import java.util.Date;
 
@@ -7,23 +9,26 @@ import java.util.Date;
  * Table for saving transfer operation history
  */
 @Entity
-@Table(name = "transfer_operation", schema = "transfer")
+@Table(name = "TRANSFER_OPERATION",
+        uniqueConstraints = { @UniqueConstraint(columnNames = { "ID" }) })
 public class TransferOperation {
 
     private String id;
     private Date createdWhen;
-    private Date completeWhen;
     private String type;
     private String accountId;
     private String transferAccountId;
-    private String summ;
+    private double sum;
     private String description;
     private String status;
-
-
+    private String details;
+    private Account account;
+    private Account transferAccount;
 
     @Id
-    @Column(name = "id", nullable = false, insertable = true, updatable = true, length = 36)
+    @GeneratedValue(generator = "uuid")
+    @GenericGenerator(name = "uuid", strategy = "uuid2")
+    @Column(name = "ID", nullable = false, insertable = false, updatable = false, length = 36)
     public String getId() {
         return id;
     }
@@ -33,7 +38,7 @@ public class TransferOperation {
     }
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_when", nullable = false, insertable = true, updatable = true)
+    @Column(name = "CREATED_WHEN", nullable = false, insertable = true, updatable = true)
     public Date getCreatedWhen() {
         return createdWhen;
     }
@@ -42,18 +47,8 @@ public class TransferOperation {
         this.createdWhen = createdWhen;
     }
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "completed_when", insertable = true, updatable = true)
-    public Date getCompleteWhen() {
-        return completeWhen;
-    }
-
-    public void setCompleteWhen(Date completeWhen) {
-        this.completeWhen = completeWhen;
-    }
-
     @Basic
-    @Column(name = "type", nullable = false, insertable = true, updatable = true, length = 50)
+    @Column(name = "TYPE", nullable = false, insertable = true, updatable = true, length = 50)
     public String getType() {
         return type;
     }
@@ -63,7 +58,7 @@ public class TransferOperation {
     }
 
     @Basic
-    @Column(name = "type", nullable = false, insertable = true, updatable = true, length = 50)
+    @Column(name = "ACCOUNT_ID", nullable = false, insertable = true, updatable = true, length = 36)
     public String getAccountId() {
         return accountId;
     }
@@ -73,7 +68,7 @@ public class TransferOperation {
     }
 
     @Basic
-    @Column(name = "type", nullable = false, insertable = true, updatable = true, length = 50)
+    @Column(name = "TRANSFER_ACCOUNT_ID", nullable = false, insertable = true, updatable = true, length = 36)
     public String getTransferAccountId() {
         return transferAccountId;
     }
@@ -83,17 +78,17 @@ public class TransferOperation {
     }
 
     @Basic
-    @Column(name = "type", nullable = false, insertable = true, updatable = true, length = 50)
-    public String getSumm() {
-        return summ;
+    @Column(name = "SUM", nullable = false, insertable = true, updatable = true, length = 50)
+    public double getSum() {
+        return sum;
     }
 
-    public void setSumm(String summ) {
-        this.summ = summ;
+    public void setSum(double sum) {
+        this.sum = sum;
     }
 
     @Basic
-    @Column(name = "type", nullable = false, insertable = true, updatable = true, length = 50)
+    @Column(name = "DESCRIPTION", nullable = false, insertable = true, updatable = true, length = 280)
     public String getDescription() {
         return description;
     }
@@ -103,7 +98,7 @@ public class TransferOperation {
     }
 
     @Basic
-    @Column(name = "type", nullable = false, insertable = true, updatable = true, length = 50)
+    @Column(name = "STATUS", nullable = false, insertable = true, updatable = true, length = 30)
     public String getStatus() {
         return status;
     }
@@ -111,4 +106,35 @@ public class TransferOperation {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    @Basic
+    @Column(name = "DETAILS", nullable = false, insertable = true, updatable = true)
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
+    }
+
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "ID", nullable = false)
+//    public Account getAccount() {
+//        return account;
+//    }
+//
+//    public void setAccount(Account account) {
+//        this.account = account;
+//    }
+//
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "ID", nullable = false)
+//    public Account getTransferAccount() {
+//        return transferAccount;
+//    }
+//
+//    public void setTransferAccount(Account transferAccount) {
+//        this.transferAccount = transferAccount;
+//    }
+
 }
