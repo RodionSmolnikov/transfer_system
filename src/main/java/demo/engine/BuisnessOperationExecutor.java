@@ -23,13 +23,11 @@ public class BuisnessOperationExecutor {
         this.dbManager = new HibernateDBManager();
     }
 
-    public static BuisnessOperationExecutor getInstance() {
-        if (instance == null)
-            synchronized (BuisnessOperationExecutor.class) {
-                if (instance == null)
-                    instance = new BuisnessOperationExecutor();
-            }
-        return instance;
+    public static synchronized BuisnessOperationExecutor getInstance() {
+         if (instance == null) {
+              instance = new BuisnessOperationExecutor();
+         }
+         return instance;
     }
 
     /**
@@ -257,35 +255,11 @@ public class BuisnessOperationExecutor {
     }
 
     private enum Operations {
-
-        //change operations
-        CREATE_ACCOUNT("create_account"),
-        DELETE_ACCOUNT("delete_account"),
-        UPDATE_ACCOUNT("asd"),
-        TOP_UP_BALANCE("top_up_balance"),
-        WITHDRAW("withdraw"),
-        TRANSFER("transfer");
-
-        private static Map<String, Operations> revertMapping = new HashMap<String, Operations>() {
-            {put("create_account", CREATE_ACCOUNT);
-                put("delete_account", DELETE_ACCOUNT);
-                put("top_up_balance", TOP_UP_BALANCE);
-                put("withdraw", WITHDRAW);
-                put("transfer", TRANSFER);
-            }
-        };
-
-        public String dbRepresentation;
-
-        Operations (String dbRepresentation) {
-            this.dbRepresentation = dbRepresentation;
-        }
-
-        Operations getOperationByName (String dbRepresentation) {
-            if (dbRepresentation == null) return null;
-            return revertMapping.getOrDefault(dbRepresentation, null);
-        }
-
+        CREATE_ACCOUNT,
+        DELETE_ACCOUNT,
+        UPDATE_ACCOUNT,
+        TOP_UP_BALANCE,
+        WITHDRAW,
+        TRANSFER
     }
-
 }
