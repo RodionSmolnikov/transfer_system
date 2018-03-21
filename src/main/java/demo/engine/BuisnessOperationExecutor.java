@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 public class BuisnessOperationExecutor {
 
+    private static int defaultLastOperationNumberList = 10;
     volatile private long currentRequestCounter = 0;
     volatile private long lastExecutedRequest = -1;
     volatile private ConcurrentNavigableMap<Long, Map<String,Object>> requestQueue;
@@ -23,6 +24,15 @@ public class BuisnessOperationExecutor {
         this.dbManager = new HibernateDBManager();
     }
 
+    /**
+     * Constructor for tests
+     */
+    protected BuisnessOperationExecutor(DBManager manager, ConcurrentNavigableMap<Long, Map<String,Object>> requestQueue) {
+        this.requestQueue = requestQueue;
+        this.dbManager = manager;
+    }
+
+    //singletone a core api interface
     public static synchronized BuisnessOperationExecutor getInstance() {
          if (instance == null) {
               instance = new BuisnessOperationExecutor();
@@ -40,11 +50,29 @@ public class BuisnessOperationExecutor {
                 !params.containsKey(Constants.Account.BALANCE_FIELD)) {
             params.put(Constants.Request.RESULT,  Constants.Messages.REQUIRED_PARAMS_NOT_PRESENT + " Needed " + Constants.Account.BALANCE_FIELD
                     + ", " + Constants.Account.FIRST_NAME_FIELD);
-            params.put(Constants.Request.CODE, HttpStatus.Code.INTERNAL_SERVER_ERROR);
+            params.put(Constants.Request.CODE, HttpStatus.Code.BAD_REQUEST);
+            return params;
         }
 
         params.put(Constants.Account.CREATED_WHEN_FIELD, Calendar.getInstance().getTime());
         long requestNumber = queueChangeRequest(Operations.CREATE_ACCOUNT, params);
+        return getResultByQueueNumber(requestNumber);
+    }
+
+    /**
+     * validate params and update account params except balance
+     * @param params - request params (first_name and balance required)
+     * @return request result
+     */
+    public Map<String, Object> updateAccount(Map<String, Object> params) {
+        if (params.containsKey(Constants.Account.BALANCE_FIELD)) {
+            params.put(Constants.Request.RESULT,  Constants.Messages.ONLY_BALANCE_OPERATIONS);
+            params.put(Constants.Request.CODE, HttpStatus.Code.BAD_REQUEST);
+            return params;
+        }
+
+        params.put(Constants.Account.CREATED_WHEN_FIELD, Calendar.getInstance().getTime());
+        long requestNumber = queueChangeRequest(Operations.UPDATE_ACCOUNT, params);
         return getResultByQueueNumber(requestNumber);
     }
 
@@ -95,6 +123,109 @@ public class BuisnessOperationExecutor {
         return result;
     }
 
+    /**
+     * return string representation of the Transfer Operation
+     * @param operationId - account id
+     * @return request result
+     */
+    public Map<String, Object> getOpearation(String operationId) {
+        Map<String, Object> result = new HashMap<>();
+        if (operationId == null) {
+            result.put(Constants.Request.RESULT,  Constants.Messages.REQUIRED_PARAMS_NOT_PRESENT + " Needed " + Constants.TransferOperation.ID_FIELD);
+            result.put(Constants.Request.CODE,  HttpStatus.Code.BAD_REQUEST);
+            return result;
+        }
+
+        TransferOperation operation = null;
+        try {
+            operation = dbManager.getTransferOperationById(operationId);
+        } catch (SQLException e) {
+            result.put(Constants.Request.RESULT, e.getMessage());
+            result.put(Constants.Request.CODE, HttpStatus.Code.INTERNAL_SERVER_ERROR);
+        }
+
+        if (operation == null) {
+            result.put(Constants.Request.RESULT, String.format(Constants.Messages.OPERATION_NOT_FOUND, operationId));
+            result.put(Constants.Request.CODE, HttpStatus.Code.BAD_REQUEST);
+        } else {
+            result.put(Constants.Request.RESULT, operation.toString());
+            result.put(Constants.Request.CODE, HttpStatus.Code.OK);
+        }
+        return result;
+    }
+
+    /**
+     * return string representation of the Transfer Operation
+     * @param params - search params, account id required
+     * @return request result
+     */
+    public Map<String, Object> getOpearations(Map<String, Object> params) {
+        Map<String, Object> result = new HashMap<>();
+        if (!params.containsKey(Constants.TransferOperation.ACCOUNT_ID_FIELD)) {
+            result.put(Constants.Request.RESULT,  Constants.Messages.REQUIRED_PARAMS_NOT_PRESENT + " Needed " + Constants.TransferOperation.ACCOUNT_ID_FIELD);
+            result.put(Constants.Request.CODE,  HttpStatus.Code.BAD_REQUEST);
+            return result;
+        }
+        int last = defaultLastOperationNumberList;
+        if (params.containsKey(Constants.TransferOperation.LAST_OPERATION_NUMBER)) {
+            last = (Integer) params.get(Constants.TransferOperation.LAST_OPERATION_NUMBER);
+            if (last <= 0) last = defaultLastOperationNumberList;
+        }
+
+        List<TransferOperation> operations = null;
+        try{
+            operations = dbManager.getLastTransferOperations(
+                    (String) params.get(Constants.TransferOperation.ACCOUNT_ID_FIELD),
+                    last);
+        } catch (SQLException e) {
+            result.put(Constants.Request.RESULT, e.getMessage());
+            result.put(Constants.Request.CODE, HttpStatus.Code.INTERNAL_SERVER_ERROR);
+        }
+
+        result.put(Constants.Request.RESULT, formatOperationList(operations, (String) params.get(Constants.TransferOperation.ACCOUNT_ID_FIELD)));
+        result.put(Constants.Request.CODE, HttpStatus.Code.OK);
+
+        return result;
+    }
+
+    private String formatOperationList(List<TransferOperation> operations, final String accountId) {
+        final StringBuilder result = new StringBuilder();
+        result.append("List Operation for ").append(accountId).append("\n");
+        operations.stream().forEach(operation -> {
+            String sign = null;
+            String direction = null;
+            switch (Operations.valueOf(operation.getType())) {
+                case TOP_UP_BALANCE:
+                    sign = "+";
+                    break;
+                case WITHDRAW:
+                    sign = "-";
+                    break;
+                case TRANSFER:
+                    if (operation.getAccountId().equals(accountId)) {
+                        sign = "-";
+                        direction = "to   " + operation.getTransferAccountId();
+                    }
+                    else {
+                        sign = "+";
+                        direction = "from " + operation.getAccountId();
+                    }
+            }
+
+            result.append(operation.getId()).append(" ");
+            result.append(String.format("%8s", sign + operation.getSum())).append(" ");
+            result.append(String.format("%25s", operation.getCreatedWhen())).append(" ");
+            result.append(String.format("%12s", operation.getStatus())).append(" ");
+            if (operation.getTransferAccountId() != null)
+                result.append(String.format("%42s", direction)).append("\n");
+            else
+                result.append("\n");
+
+        });
+        return result.toString();
+    }
+
+
 
     /**
      * validate params and increase balance of the account
@@ -113,10 +244,57 @@ public class BuisnessOperationExecutor {
         if (params.containsKey(Constants.TransferOperation.TRANSFER_ACCOUNT_ID_FIELD)) {
             params.remove(Constants.TransferOperation.TRANSFER_ACCOUNT_ID_FIELD);
         }
-
+        params.put(Constants.TransferOperation.TYPE_FIELD, Operations.TOP_UP_BALANCE);
         params.put(Constants.TransferOperation.CREATED_WHEN_FIELD,  Calendar.getInstance().getTime());
 
         long requestNumber = queueChangeRequest(Operations.TOP_UP_BALANCE, params);
+        return getResultByQueueNumber(requestNumber);
+    }
+
+    /**
+     * validate params and decrease balance of the account if it's possible
+     * @param params - request params (account id and sum required)
+     * @return request result
+     */
+    public Map<String, Object> withdraw(Map<String, Object> params) {
+        if (!params.containsKey(Constants.TransferOperation.ACCOUNT_ID_FIELD)
+                || !params.containsKey(Constants.TransferOperation.SUM_FIELD)) {
+            params.put(Constants.Request.RESULT,  Constants.Messages.REQUIRED_PARAMS_NOT_PRESENT + " Needed " + Constants.TransferOperation.ACCOUNT_ID_FIELD
+                    + ", "  + Constants.TransferOperation.SUM_FIELD);
+            params.put(Constants.Request.CODE,  HttpStatus.Code.BAD_REQUEST);
+            return params;
+        }
+
+        if (params.containsKey(Constants.TransferOperation.TRANSFER_ACCOUNT_ID_FIELD)) {
+            params.remove(Constants.TransferOperation.TRANSFER_ACCOUNT_ID_FIELD);
+        }
+
+        params.put(Constants.TransferOperation.TYPE_FIELD, Operations.WITHDRAW);
+        params.put(Constants.TransferOperation.CREATED_WHEN_FIELD,  Calendar.getInstance().getTime());
+
+        long requestNumber = queueChangeRequest(Operations.WITHDRAW, params);
+        return getResultByQueueNumber(requestNumber);
+    }
+
+    /**
+     * validate params and move sum from account to transfer account if it's possible
+     * @param params - request params (account id and sum required)
+     * @return request result
+     */
+    public Map<String, Object> transfer(Map<String, Object> params) {
+        if (!params.containsKey(Constants.TransferOperation.ACCOUNT_ID_FIELD)
+                || !params.containsKey(Constants.TransferOperation.SUM_FIELD)
+                || !params.containsKey(Constants.TransferOperation.TRANSFER_ACCOUNT_ID_FIELD)) {
+            params.put(Constants.Request.RESULT,  Constants.Messages.REQUIRED_PARAMS_NOT_PRESENT + " Needed " + Constants.TransferOperation.ACCOUNT_ID_FIELD
+                    + ", "  + Constants.TransferOperation.SUM_FIELD
+                    + ", "  + Constants.TransferOperation.TRANSFER_ACCOUNT_ID_FIELD);
+            params.put(Constants.Request.CODE,  HttpStatus.Code.BAD_REQUEST);
+            return params;
+        }
+        params.put(Constants.TransferOperation.TYPE_FIELD, Operations.TRANSFER);
+        params.put(Constants.TransferOperation.CREATED_WHEN_FIELD,  Calendar.getInstance().getTime());
+
+        long requestNumber = queueChangeRequest(Operations.TRANSFER, params);
         return getResultByQueueNumber(requestNumber);
     }
 
@@ -143,28 +321,26 @@ public class BuisnessOperationExecutor {
                         break;
                     case DELETE_ACCOUNT:
                         result = dbManager.deleteAccount((String)params.get(Constants.Account.ID_FIELD));
-                        if (result.matches(".* not found")) {
-                            code = HttpStatus.Code.NOT_FOUND;
-                        } else {
-                            code = HttpStatus.Code.OK;
-                        }
                         break;
                     case UPDATE_ACCOUNT:
                         result = dbManager.updateAccount(fillAccount(params));
-                        if (result.matches(".*not found"))
-                            code = HttpStatus.Code.NOT_FOUND;
-                        else
-                            code = HttpStatus.Code.OK;
                         break;
                     case TOP_UP_BALANCE:
                         result = dbManager.procceedTopUp(fillOperation(params));
+                        break;
                     case WITHDRAW:
+                        result = dbManager.procceedWithdraw(fillOperation(params));
+                        break;
                     case TRANSFER:
+                        result = dbManager.procceedTransfer(fillOperation(params));
+                        break;
                 }
             } catch (SQLException e) {
                 result = e.getMessage();
                 code = HttpStatus.Code.INTERNAL_SERVER_ERROR; /*internal server error*/
             }
+            if (code == null)
+                code = result.matches(".* not found") ? HttpStatus.Code.NOT_FOUND : HttpStatus.Code.OK;
             params.put(Constants.Request.RESULT, result);
             params.put(Constants.Request.CODE, code);
         });
@@ -208,6 +384,9 @@ public class BuisnessOperationExecutor {
                 case (Constants.TransferOperation.STATUS_FIELD):
                     to.setStatus((String) params.get(field));
                     break;
+                case (Constants.TransferOperation.TYPE_FIELD):
+                    to.setType(params.get(field).toString());
+                    break;
                 case (Constants.TransferOperation.ACCOUNT_ID_FIELD):
                     to.setAccountId((String) params.get(field));
                     break;
@@ -234,7 +413,7 @@ public class BuisnessOperationExecutor {
      * @param request - map with request params
      * @return number of the request in the queue
      */
-    public synchronized long queueChangeRequest(Operations operation, Map<String, Object> request) {
+    protected synchronized long queueChangeRequest(Operations operation, Map<String, Object> request) {
         request.put(Constants.Request.TYPE, operation);
         requestQueue.put(currentRequestCounter, request);
         return currentRequestCounter++;
@@ -245,7 +424,7 @@ public class BuisnessOperationExecutor {
      * @param queueNumber - number of response (equals to request nubmer) REST action is waited by.
      * @return response for the request
      */
-    public Map<String, Object> getResultByQueueNumber(long queueNumber) {
+    protected Map<String, Object> getResultByQueueNumber(long queueNumber) {
         //check before synchronization block
         String result;
         if(queueNumber >= lastExecutedRequest && requestQueue.containsKey(queueNumber)) {
@@ -254,12 +433,12 @@ public class BuisnessOperationExecutor {
         return requestQueue.remove(queueNumber);
     }
 
-    private enum Operations {
+    public enum Operations {
         CREATE_ACCOUNT,
         DELETE_ACCOUNT,
         UPDATE_ACCOUNT,
         TOP_UP_BALANCE,
         WITHDRAW,
-        TRANSFER
+        TRANSFER;
     }
 }

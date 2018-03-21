@@ -1,7 +1,6 @@
 package demo.datasource;
 
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.List;
 
 public interface DBManager {
@@ -18,9 +17,7 @@ public interface DBManager {
 
     TransferOperation getTransferOperationById(String operationId) throws SQLException;
 
-    List<TransferOperation> getTransferOperationsByDates(Date after, Date before, String accountID) throws SQLException;
-
-    List<TransferOperation> getTransferOperationsSinceDate(Date after, String accountID) throws SQLException;
+    List<TransferOperation> getLastTransferOperations(String accountID, int last) throws SQLException;
 
     String procceedTopUp(TransferOperation operation) throws SQLException;
 

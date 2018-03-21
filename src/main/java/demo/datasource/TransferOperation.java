@@ -22,8 +22,6 @@ public class TransferOperation {
     private String description;
     private String status;
     private String details;
-    private Account account;
-    private Account transferAccount;
 
     @Id
     @GeneratedValue(generator = "uuid")
@@ -38,7 +36,7 @@ public class TransferOperation {
     }
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "CREATED_WHEN", nullable = false, insertable = true, updatable = true)
+    @Column(name = "CREATED_WHEN", nullable = false)
     public Date getCreatedWhen() {
         return createdWhen;
     }
@@ -58,7 +56,7 @@ public class TransferOperation {
     }
 
     @Basic
-    @Column(name = "ACCOUNT_ID", nullable = false, insertable = true, updatable = true, length = 36)
+    @Column(name = "ACCOUNT_ID", nullable = false, length = 36)
     public String getAccountId() {
         return accountId;
     }
@@ -68,7 +66,7 @@ public class TransferOperation {
     }
 
     @Basic
-    @Column(name = "TRANSFER_ACCOUNT_ID", nullable = false, insertable = true, updatable = true, length = 36)
+    @Column(name = "TRANSFER_ACCOUNT_ID", length = 36)
     public String getTransferAccountId() {
         return transferAccountId;
     }
@@ -78,7 +76,7 @@ public class TransferOperation {
     }
 
     @Basic
-    @Column(name = "SUM", nullable = false, insertable = true, updatable = true, length = 50)
+    @Column(name = "SUM", nullable = false, length = 50)
     public double getSum() {
         return sum;
     }
@@ -88,7 +86,7 @@ public class TransferOperation {
     }
 
     @Basic
-    @Column(name = "DESCRIPTION", nullable = false, insertable = true, updatable = true, length = 280)
+    @Column(name = "DESCRIPTION", length = 280)
     public String getDescription() {
         return description;
     }
@@ -98,7 +96,7 @@ public class TransferOperation {
     }
 
     @Basic
-    @Column(name = "STATUS", nullable = false, insertable = true, updatable = true, length = 30)
+    @Column(name = "STATUS", nullable = false, length = 30)
     public String getStatus() {
         return status;
     }
@@ -108,7 +106,7 @@ public class TransferOperation {
     }
 
     @Basic
-    @Column(name = "DETAILS", nullable = false, insertable = true, updatable = true)
+    @Column(name = "DETAILS", length = 280)
     public String getDetails() {
         return details;
     }
@@ -117,24 +115,18 @@ public class TransferOperation {
         this.details = details;
     }
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "ID", nullable = false)
-//    public Account getAccount() {
-//        return account;
-//    }
-//
-//    public void setAccount(Account account) {
-//        this.account = account;
-//    }
-//
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "ID", nullable = false)
-//    public Account getTransferAccount() {
-//        return transferAccount;
-//    }
-//
-//    public void setTransferAccount(Account transferAccount) {
-//        this.transferAccount = transferAccount;
-//    }
-
+    @Override
+    public String toString() {
+        return "TransferOperation{" + "\n" +
+                "id=" + id + ",\n" +
+                " createdWhen=" + createdWhen + ",\n" +
+                " type=" + type + ",\n" +
+                " accountId=" + accountId + ",\n" +
+                " transferAccountId=" + transferAccountId + ",\n" +
+                " sum=" + sum + ",\n" +
+                " description=" + description + ",\n" +
+                " status=" + status + ",\n" +
+                " details=" + details + ",\n" +
+                '}';
+    }
 }

@@ -29,7 +29,7 @@ public class Account {
     }
 
     @Basic
-    @Column(name = "FIRST_NAME", nullable = false, insertable = true, updatable = true, length = 100)
+    @Column(name = "FIRST_NAME", nullable = false, length = 100)
     public String getFirstName() {
         return firstName;
     }
@@ -39,7 +39,7 @@ public class Account {
     }
 
     @Basic
-    @Column(name = "LAST_NAME", nullable = true, insertable = true, updatable = true, length = 100)
+    @Column(name = "LAST_NAME", length = 100)
     public String getLastName() {
         return lastName;
     }
@@ -49,7 +49,7 @@ public class Account {
     }
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "CREATED_WHEN", nullable = false, insertable = true, updatable = true)
+    @Column(name = "CREATED_WHEN", nullable = false)
     public Date getCreatedWhen() {
         return createdWhen;
     }
@@ -59,7 +59,7 @@ public class Account {
     }
 
     @Basic
-    @Column(name = "BALANCE", nullable = false, insertable = true, updatable = true)
+    @Column(name = "BALANCE", nullable = false)
     public double getBalance() {
         return balance;
     }
@@ -70,11 +70,12 @@ public class Account {
 
     @Override
     public String toString() {
-        return "Account: " + '\n' +
-                "id = " + getId() + '\n' +
-                "firstName = " + getFirstName() + '\n' +
-                "lastName = " + getLastName() + '\n' +
-                "created_when = " + getCreatedWhen() + '\n' +
-                "balance = " + getBalance() + '\n';
+        return "Account{" + "\n" +
+                "id=" + id + ",\n" +
+                " firstName=" + firstName + ",\n" +
+                " lastName=" + lastName + ",\n" +
+                " createdWhen=" + createdWhen + ",\n" +
+                " balance=" + balance + ",\n" +
+                '}';
     }
 }

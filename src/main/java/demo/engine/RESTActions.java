@@ -2,42 +2,95 @@ package demo.engine;
 
 import demo.datasource.Constants;
 import io.javalin.Context;
+import io.javalin.Javalin;
 import org.eclipse.jetty.http.HttpStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.javalin.ApiBuilder.*;
+import static io.javalin.ApiBuilder.get;
+import static io.javalin.ApiBuilder.post;
+
 public class RESTActions {
 
     private static BuisnessOperationExecutor executor = BuisnessOperationExecutor.getInstance();
+    private static final String ROOT_PATH = "/app";
+    private static final String ACCOUNT_PATH = ROOT_PATH + "/account";
+    private static final String TRANSFER_OPERATION_PATH = ROOT_PATH + "/operation";
+
+    public static Javalin setUpAPI(int port) {
+        Javalin restAPI = Javalin.create();
+        restAPI.port(port);
+
+        restAPI.routes(() -> {
+            path(ACCOUNT_PATH, () -> {
+                put(RESTActions::createAccount);
+                path(":id", () -> {
+                    get(RESTActions::getAccount);
+                    post(RESTActions::updateAccount);
+                    delete(RESTActions::deleteAccount);
+                });
+            });
+            path(TRANSFER_OPERATION_PATH, () -> {
+                path(":id", () -> {
+                    get(RESTActions::getOperation);
+                });
+                path("account/:id", () -> {
+                    path("search", () -> {
+                        post(RESTActions::getOperationsForAccount);
+                    });
+                    put(RESTActions::topUpBalance);
+                    delete(RESTActions::withdraw);
+                    post(RESTActions::transfer);
+                });
+            });
+        });
+        return restAPI;
+    }
 
     public static void createAccount(Context var1) {
         setResult(var1, executor.createAccount(formatParameters(var1.formParamMap())));
     }
 
-//    public static void updateAccount(Context var1) {
-//        setResult(var1, executor.update(formatParameters(var1.formParamMap())));
-//    }
+    public static void updateAccount(Context var1) {
+        Map<String, Object> params = new HashMap<>();
+        params.put(Constants.Account.ID_FIELD ,var1.param(":id"));
+        params.putAll(formatParameters(var1.formParamMap()));
+        setResult(var1, executor.updateAccount(params));
+    }
 
 
     public static void getOperation(Context var1) {
-        setResult(var1, executor.createAccount(formatParameters(var1.formParamMap())));
+        setResult(var1, executor.getOpearation(var1.param(":id")));
     }
 
     public static void topUpBalance(Context var1) {
-
+        Map<String, Object> params = new HashMap<>();
+        params.put(Constants.TransferOperation.ACCOUNT_ID_FIELD ,var1.param(":id"));
+        params.putAll(formatParameters(var1.formParamMap()));
+        setResult(var1, executor.topUpBalance(params));
     }
 
     public static void withdraw(Context var1) {
-
+        Map<String, Object> params = new HashMap<>();
+        params.put(Constants.TransferOperation.ACCOUNT_ID_FIELD ,var1.param(":id"));
+        params.putAll(formatParameters(var1.formParamMap()));
+        setResult(var1, executor.withdraw(params));
     }
 
     public static void transfer(Context var1) {
-
+        Map<String, Object> params = new HashMap<>();
+        params.put(Constants.TransferOperation.ACCOUNT_ID_FIELD ,var1.param(":id"));
+        params.putAll(formatParameters(var1.formParamMap()));
+        setResult(var1, executor.transfer(params));
     }
 
     public static void getOperationsForAccount(Context var1) {
-
+        Map<String, Object> params = new HashMap<>();
+        params.put(Constants.TransferOperation.ACCOUNT_ID_FIELD ,var1.param(":id"));
+        params.putAll(formatParameters(var1.formParamMap()));
+        setResult(var1, executor.getOpearations(params));
     }
 
 
@@ -79,6 +132,9 @@ public class RESTActions {
                             Double money = Double.valueOf(formParam.get(key)[0]);
                             money =(double) Math.round(money*100)/100;
                             params.put(key, money);
+                            break;
+                        case Constants.TransferOperation.LAST_OPERATION_NUMBER:
+                            params.put(key, Integer.valueOf((formParam.get(key))[0]));
                             break;
                         default:
                             params.put(key, (formParam.get(key))[0]);
