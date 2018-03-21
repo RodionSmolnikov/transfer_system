@@ -57,7 +57,7 @@ public class HibernateDBManager implements DBManager {
                 existingAccount.setFirstName(account.getFirstName());
             }
             session.update(existingAccount);
-            result.append(String.format(Constants.Messages.ACCOUNT_UPDATED, existingAccount.getId()));
+            result.append(existingAccount.toString());
         });
         return result.toString();
     }

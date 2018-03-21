@@ -339,8 +339,11 @@ public class BuisnessOperationExecutor {
                 result = e.getMessage();
                 code = HttpStatus.Code.INTERNAL_SERVER_ERROR; /*internal server error*/
             }
-            if (code == null)
+            if (code == null) {
+                if(result.contains("not found")) code = HttpStatus.Code.NOT_FOUND;
+                if(result.contains("not completed")) code = HttpStatus.Code.NOT_FOUND;
                 code = result.matches(".* not found") ? HttpStatus.Code.NOT_FOUND : HttpStatus.Code.OK;
+            }
             params.put(Constants.Request.RESULT, result);
             params.put(Constants.Request.CODE, code);
         });

@@ -59,7 +59,7 @@ public class BuisnessOperationConcurrentTest {
         testParams = new HashMap<>();
         testParams.put("first_name", "test_name");
         testParams.put("balance", 100.0);
-        count = new ArrayList<>();
+        count = Collections.synchronizedList(new ArrayList<>());
     }
 
     @Test
