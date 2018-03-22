@@ -62,7 +62,7 @@ public class RESTActions {
 
 
     public static void getOperation(Context var1) {
-        setResult(var1, executor.getOpearation(var1.param(":id")));
+        setResult(var1, executor.getOperation(var1.param(":id")));
     }
 
     public static void topUpBalance(Context var1) {
@@ -90,7 +90,7 @@ public class RESTActions {
         Map<String, Object> params = new HashMap<>();
         params.put(Constants.TransferOperation.ACCOUNT_ID_FIELD ,var1.param(":id"));
         params.putAll(formatParameters(var1.formParamMap()));
-        setResult(var1, executor.getOpearations(params));
+        setResult(var1, executor.getOperations(params));
     }
 
 

@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 public class BuisnessOperationExecutor {
 
-    private static int defaultLastOperationNumberList = 10;
+    private static final int defaultLastOperationNumberList = 10;
     volatile private long currentRequestCounter = 0;
     volatile private long lastExecutedRequest = -1;
     volatile private ConcurrentNavigableMap<Long, Map<String,Object>> requestQueue;
@@ -65,6 +65,12 @@ public class BuisnessOperationExecutor {
      * @return request result
      */
     public Map<String, Object> updateAccount(Map<String, Object> params) {
+        if (!params.containsKey(Constants.Account.ID_FIELD)) {
+            params.put(Constants.Request.RESULT,  Constants.Messages.REQUIRED_PARAMS_NOT_PRESENT + " Needed " + Constants.Account.ID_FIELD);
+            params.put(Constants.Request.CODE, HttpStatus.Code.BAD_REQUEST);
+            return params;
+        }
+
         if (params.containsKey(Constants.Account.BALANCE_FIELD)) {
             params.put(Constants.Request.RESULT,  Constants.Messages.ONLY_BALANCE_OPERATIONS);
             params.put(Constants.Request.CODE, HttpStatus.Code.BAD_REQUEST);
@@ -111,6 +117,7 @@ public class BuisnessOperationExecutor {
         } catch (SQLException e) {
             result.put(Constants.Request.RESULT, e.getMessage());
             result.put(Constants.Request.CODE, HttpStatus.Code.INTERNAL_SERVER_ERROR);
+            return result;
         }
 
         if (account == null) {
@@ -128,7 +135,7 @@ public class BuisnessOperationExecutor {
      * @param operationId - account id
      * @return request result
      */
-    public Map<String, Object> getOpearation(String operationId) {
+    public Map<String, Object> getOperation(String operationId) {
         Map<String, Object> result = new HashMap<>();
         if (operationId == null) {
             result.put(Constants.Request.RESULT,  Constants.Messages.REQUIRED_PARAMS_NOT_PRESENT + " Needed " + Constants.TransferOperation.ID_FIELD);
@@ -142,6 +149,7 @@ public class BuisnessOperationExecutor {
         } catch (SQLException e) {
             result.put(Constants.Request.RESULT, e.getMessage());
             result.put(Constants.Request.CODE, HttpStatus.Code.INTERNAL_SERVER_ERROR);
+            return result;
         }
 
         if (operation == null) {
@@ -159,12 +167,11 @@ public class BuisnessOperationExecutor {
      * @param params - search params, account id required
      * @return request result
      */
-    public Map<String, Object> getOpearations(Map<String, Object> params) {
-        Map<String, Object> result = new HashMap<>();
+    public Map<String, Object> getOperations(Map<String, Object> params) {
         if (!params.containsKey(Constants.TransferOperation.ACCOUNT_ID_FIELD)) {
-            result.put(Constants.Request.RESULT,  Constants.Messages.REQUIRED_PARAMS_NOT_PRESENT + " Needed " + Constants.TransferOperation.ACCOUNT_ID_FIELD);
-            result.put(Constants.Request.CODE,  HttpStatus.Code.BAD_REQUEST);
-            return result;
+            params.put(Constants.Request.RESULT,  Constants.Messages.REQUIRED_PARAMS_NOT_PRESENT + " Needed " + Constants.TransferOperation.ACCOUNT_ID_FIELD);
+            params.put(Constants.Request.CODE,  HttpStatus.Code.BAD_REQUEST);
+            return params;
         }
         int last = defaultLastOperationNumberList;
         if (params.containsKey(Constants.TransferOperation.LAST_OPERATION_NUMBER)) {
@@ -178,14 +185,15 @@ public class BuisnessOperationExecutor {
                     (String) params.get(Constants.TransferOperation.ACCOUNT_ID_FIELD),
                     last);
         } catch (SQLException e) {
-            result.put(Constants.Request.RESULT, e.getMessage());
-            result.put(Constants.Request.CODE, HttpStatus.Code.INTERNAL_SERVER_ERROR);
+            params.put(Constants.Request.RESULT, e.getMessage());
+            params.put(Constants.Request.CODE, HttpStatus.Code.INTERNAL_SERVER_ERROR);
+            return params;
         }
 
-        result.put(Constants.Request.RESULT, formatOperationList(operations, (String) params.get(Constants.TransferOperation.ACCOUNT_ID_FIELD)));
-        result.put(Constants.Request.CODE, HttpStatus.Code.OK);
+        params.put(Constants.Request.RESULT, formatOperationList(operations, (String) params.get(Constants.TransferOperation.ACCOUNT_ID_FIELD)));
+        params.put(Constants.Request.CODE, HttpStatus.Code.OK);
 
-        return result;
+        return params;
     }
 
     private String formatOperationList(List<TransferOperation> operations, final String accountId) {
@@ -291,6 +299,14 @@ public class BuisnessOperationExecutor {
             params.put(Constants.Request.CODE,  HttpStatus.Code.BAD_REQUEST);
             return params;
         }
+
+        if (params.get(Constants.TransferOperation.ACCOUNT_ID_FIELD)
+                .equals(params.get(Constants.TransferOperation.TRANSFER_ACCOUNT_ID_FIELD))) {
+            params.put(Constants.Request.RESULT,  Constants.Messages.CANT_TRANSFER_TO_THE_SAME_ACCOUNT);
+            params.put(Constants.Request.CODE,  HttpStatus.Code.BAD_REQUEST);
+            return params;
+        }
+
         params.put(Constants.TransferOperation.TYPE_FIELD, Operations.TRANSFER);
         params.put(Constants.TransferOperation.CREATED_WHEN_FIELD,  Calendar.getInstance().getTime());
 

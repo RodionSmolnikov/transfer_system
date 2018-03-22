@@ -7,6 +7,7 @@ public class Constants {
 
     public interface Messages {
         String REQUIRED_PARAMS_NOT_PRESENT = "Required parameters are not present.";
+        String CANT_TRANSFER_TO_THE_SAME_ACCOUNT = "Transfer to the same account is not allowed";
         String ONLY_BALANCE_OPERATIONS = "Only balance operations can change balance";
         String INSUFFICIENT_FUNDS_DETAILS = "insufficient funds";
         String ACCOUNT_NOT_FOUND = "Account %s not found";
