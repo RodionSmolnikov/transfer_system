@@ -26,8 +26,8 @@
         <!-- Drop and re-create the database schema on startup -->
         <property name="hbm2ddl.auto">create</property>
 
-        <mapping class="demo.datasource.Account"/>
-        <mapping class="demo.datasource.TransferOperation"/>
+        <mapping class="demo.storage.entities.AccountEntity"/>
+        <mapping class="demo.storage.entities.OperationEntity"/>
 
     </session-factory>
 </hibernate-configuration>

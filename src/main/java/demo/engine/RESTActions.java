@@ -1,27 +1,46 @@
 package demo.engine;
 
-import demo.datasource.Constants;
-import io.javalin.Context;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
+import demo.engine.exeption.OperationException;
+import demo.engine.model.Account;
+import demo.engine.model.Operation;
 import io.javalin.Javalin;
-import org.eclipse.jetty.http.HttpStatus;
+import io.javalin.http.Context;
+import io.javalin.plugin.json.JavalinJackson;
+import lombok.extern.slf4j.Slf4j;
+import demo.engine.model.Error;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.concurrent.Future;
 
-import static io.javalin.ApiBuilder.*;
-import static io.javalin.ApiBuilder.get;
-import static io.javalin.ApiBuilder.post;
+import static io.javalin.apibuilder.ApiBuilder.*;
 
+@Slf4j
 public class RESTActions {
 
-    private static BuisnessOperationExecutor executor = BuisnessOperationExecutor.getInstance();
-    private static final String ROOT_PATH = "/app";
-    private static final String ACCOUNT_PATH = ROOT_PATH + "/account";
-    private static final String TRANSFER_OPERATION_PATH = ROOT_PATH + "/operation";
+    //default thread count = 5
+    private static BuisnessOperationExecutor executor = new BuisnessOperationExecutor(
+            System.getenv("THREAD_COUNT") == null ? 5: Integer.parseInt(System.getenv("THREAD_COUNT")));
 
-    public static Javalin setUpAPI(int port) {
-        Javalin restAPI = Javalin.create();
-        restAPI.port(port);
+    private static final String VERSION = "/v1";
+    private static final String ROOT_PATH = "/app";
+    private static final String ACCOUNT_PATH = ROOT_PATH + VERSION + "/account";
+    private static final String TRANSFER_OPERATION_PATH = ROOT_PATH  + VERSION + "/operation";
+
+    public static Javalin setUpAPI() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.setDateFormat(new StdDateFormat().withColonInTimeZone(true));
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        JavalinJackson.configure(mapper);
+
+        Javalin restAPI = Javalin.create(config -> {
+                config.defaultContentType = "application/json";
+                config.requestLogger((ctx, ms) -> {
+                    log.info("Executed in {} ms. {} {} -> \n {}", ms, ctx.method(), ctx.url(), ctx.body());
+                });
+            });
 
         restAPI.routes(() -> {
             path(ACCOUNT_PATH, () -> {
@@ -29,118 +48,121 @@ public class RESTActions {
                 path(":id", () -> {
                     get(RESTActions::getAccount);
                     post(RESTActions::updateAccount);
-                    delete(RESTActions::deleteAccount);
                 });
             });
             path(TRANSFER_OPERATION_PATH, () -> {
-                path(":id", () -> {
-                    get(RESTActions::getOperation);
-                });
-                path("account/:id", () -> {
-                    path("search", () -> {
-                        post(RESTActions::getOperationsForAccount);
-                    });
-                    put(RESTActions::topUpBalance);
-                    delete(RESTActions::withdraw);
-                    post(RESTActions::transfer);
-                });
+                post(RESTActions::transfer);
+                path(":id", () -> get(RESTActions::getOperation));
+                path("account/:id", () -> get(RESTActions::getOperationsForAccount));
             });
         });
         return restAPI;
     }
 
-    public static void createAccount(Context var1) {
-        setResult(var1, executor.createAccount(formatParameters(var1.formParamMap())));
+    public static void createAccount(Context ctx) {
+        try {
+            Future<Account> execution = executor.createAccount(ctx.bodyAsClass(Account.class));
+            ctx.json(execution.get());
+            ctx.status(201);
+        } catch (OperationException e) {
+            ctx.status(401);
+            ctx.json(new Error(e));
+        } catch (Exception e) {
+            if (e.getCause() instanceof OperationException) {
+                ctx.status(401);
+                ctx.json(new Error((OperationException) e.getCause()));
+            } else {
+                ctx.status(500);
+                ctx.json(new Error(e));
+            }
+        }
     }
 
-    public static void updateAccount(Context var1) {
-        Map<String, Object> params = new HashMap<>();
-        params.put(Constants.Account.ID_FIELD ,var1.param(":id"));
-        params.putAll(formatParameters(var1.formParamMap()));
-        setResult(var1, executor.updateAccount(params));
+    public static void updateAccount(Context ctx) {
+        Account account = ctx.bodyAsClass(Account.class);
+        account.setId(ctx.pathParam("id"));
+        try {
+            Future<Account> execution = executor.updateAccount(account);
+            ctx.json(execution.get());
+            ctx.status(202);
+        } catch (OperationException e) {
+            ctx.status(401);
+            ctx.json(new Error(e));
+        } catch (Exception e) {
+            if (e.getCause() instanceof OperationException) {
+                ctx.status(401);
+                ctx.json(new Error((OperationException) e.getCause()));
+            } else {
+                ctx.status(500);
+                ctx.json(new Error(e));
+            }
+        }
     }
 
-
-    public static void getOperation(Context var1) {
-        setResult(var1, executor.getOperation(var1.param(":id")));
+    public static void getOperation(Context ctx) {
+        try {
+            ctx.json(executor.getOperation(ctx.pathParam("id")));
+            ctx.status(200);
+        } catch (OperationException e) {
+            ctx.status(404);
+            ctx.json(new Error(e));
+        } catch (Exception e) {
+            if (e.getCause() instanceof OperationException) {
+                ctx.status(404);
+                ctx.json(new Error((OperationException) e.getCause()));
+            } else {
+                ctx.status(500);
+                ctx.json(new Error(e));
+            }
+        }
     }
 
-    public static void topUpBalance(Context var1) {
-        Map<String, Object> params = new HashMap<>();
-        params.put(Constants.TransferOperation.ACCOUNT_ID_FIELD ,var1.param(":id"));
-        params.putAll(formatParameters(var1.formParamMap()));
-        setResult(var1, executor.topUpBalance(params));
+    public static void transfer(Context ctx) {
+        try {
+            Future<Operation> execution = executor.transferMoney(ctx.bodyAsClass(Operation.class));
+            ctx.json(execution.get());
+            ctx.status(201);
+        } catch (OperationException e) {
+            ctx.status(401);
+            ctx.json(new Error(e));
+        } catch (Exception e) {
+            if (e.getCause() instanceof OperationException) {
+                ctx.status(401);
+                ctx.json(new Error((OperationException) e.getCause()));
+            } else {
+                ctx.status(500);
+                ctx.json(new Error(e));
+            }
+        }
     }
 
-    public static void withdraw(Context var1) {
-        Map<String, Object> params = new HashMap<>();
-        params.put(Constants.TransferOperation.ACCOUNT_ID_FIELD ,var1.param(":id"));
-        params.putAll(formatParameters(var1.formParamMap()));
-        setResult(var1, executor.withdraw(params));
+    public static void getOperationsForAccount(Context ctx) {
+        try {
+            List<Operation> operations = executor.getOperationsForAccount(ctx.pathParam(":id"));
+            ctx.json(operations);
+            ctx.status(200);
+        } catch (Exception e) {
+            ctx.status(500);
+            ctx.json(new Error(e));
+        }
     }
 
-    public static void transfer(Context var1) {
-        Map<String, Object> params = new HashMap<>();
-        params.put(Constants.TransferOperation.ACCOUNT_ID_FIELD ,var1.param(":id"));
-        params.putAll(formatParameters(var1.formParamMap()));
-        setResult(var1, executor.transfer(params));
+    public static void getAccount(Context ctx) {
+        try {
+            Account account = executor.getAccount(ctx.pathParam(":id"));
+            ctx.json(account);
+            ctx.status(200);
+        } catch (OperationException e) {
+            ctx.status(404);
+            ctx.json(new Error(e));
+        } catch (Exception e) {
+            if (e.getCause() instanceof OperationException) {
+                ctx.status(404);
+                ctx.json(new Error((OperationException) e.getCause()));
+            } else {
+                ctx.status(500);
+                ctx.json(new Error(e));
+            }
+        }
     }
-
-    public static void getOperationsForAccount(Context var1) {
-        Map<String, Object> params = new HashMap<>();
-        params.put(Constants.TransferOperation.ACCOUNT_ID_FIELD ,var1.param(":id"));
-        params.putAll(formatParameters(var1.formParamMap()));
-        setResult(var1, executor.getOperations(params));
-    }
-
-
-
-    public static void deleteAccount(Context var1) {
-        Map<String, Object> params = new HashMap<>();
-        params.put(Constants.Account.ID_FIELD ,var1.param(":id"));
-        setResult(var1, executor.deleteAccount(params));
-    }
-
-    public static void getAccount(Context var1) {
-        setResult(var1, executor.getAccount(var1.param(":id")));
-    }
-
-    private boolean checkSummFormat() {
-        return true;
-    }
-
-    private static void setResult(Context context, Map<String, Object> params) {
-        if (params.containsKey(Constants.Request.RESULT))
-            context.result(params.get(Constants.Request.RESULT).toString());
-        else
-            context.result("Unexpected error");
-
-        if (params.containsKey(Constants.Request.CODE))
-            context.status(((HttpStatus.Code)params.get(Constants.Request.CODE)).getCode());
-        else
-            context.status(500);
-
-    }
-
-    //format params for applications/x-www-form-urlencoded just for simplify
-    private static Map<String, Object> formatParameters(Map<String, String[]> formParam) {
-        Map<String, Object> params = new HashMap<>();
-        formParam.keySet().stream().forEach(key -> {
-                    switch (key) {
-                        case Constants.Account.BALANCE_FIELD:
-                        case Constants.TransferOperation.SUM_FIELD:
-                            Double money = Double.valueOf(formParam.get(key)[0]);
-                            money =(double) Math.round(money*100)/100;
-                            params.put(key, money);
-                            break;
-                        case Constants.TransferOperation.LAST_OPERATION_NUMBER:
-                            params.put(key, Integer.valueOf((formParam.get(key))[0]));
-                            break;
-                        default:
-                            params.put(key, (formParam.get(key))[0]);
-                    }
-                });
-        return params;
-    }
-
 }

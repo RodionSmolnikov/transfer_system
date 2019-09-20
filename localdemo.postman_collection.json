@@ -1,0 +1,877 @@
+{
+	"info": {
+		"_postman_id": "70908ba8-ead4-452b-a895-f5abecd13954",
+		"name": "localdemo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "SimpleTranferCase",
+			"item": [
+				{
+					"name": "Account A create",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2f1dc4c6-644d-40c1-a3b3-714637c6531a",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    var jsonData = pm.response.json();",
+									"    pm.globals.set(\"account_A\", jsonData.id);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\" : \"Alice Cooper\",\n\t\"balance\": 2000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/account",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"account"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Account  B create",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2f1dc4c6-644d-40c1-a3b3-714637c6531a",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    var jsonData = pm.response.json();",
+									"    pm.globals.set(\"account_B\", jsonData.id);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\" : \"Bob Doe\",\n\t\"balance\": 1000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/account",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"account"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transfer 250 from A to B",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"accountId\": \"{{account_A}}\",\r\n    \"transferAccountId\": \"{{account_B}}\",\r\n    \"sum\": 250,\r\n    \"type\" : \"TRANSFER\",\r\n    \"description\" : \"Transfer from A to B\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getAccount A",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5d5bcf18-4465-4659-8096-51c96258e815",
+								"exec": [
+									"pm.test(\"A\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.balance).to.eql(1750);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/app/v1/account/{{account_A}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"account",
+								"{{account_A}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get Account B",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "94dfb8a9-4294-4c6c-be85-653452bf7c97",
+								"exec": [
+									"pm.test(\"B\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.balance).to.eql(1250);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/app/v1/account/{{account_B}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"account",
+								"{{account_B}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "ComplexTest",
+			"item": [
+				{
+					"name": "Account A create (2000)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2f1dc4c6-644d-40c1-a3b3-714637c6531a",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    var jsonData = pm.response.json();",
+									"    pm.globals.set(\"account_A\", jsonData.id);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\" : \"Alice Cooper\",\n\t\"balance\": 2000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/account",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"account"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Topup 500 for A",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"accountId\": \"{{account_A}}\",\r\n    \"sum\": 500,\r\n    \"type\" : \"TOP_UP_BALANCE\",\r\n    \"description\" : \"First time topup for A\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Account  B create (1000)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2f1dc4c6-644d-40c1-a3b3-714637c6531a",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    var jsonData = pm.response.json();",
+									"    pm.globals.set(\"account_B\", jsonData.id);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\" : \"Bob Doe\",\n\t\"balance\": 1000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/account",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"account"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Withdraw 300 for B",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"accountId\": \"{{account_B}}\",\r\n    \"sum\": 300,\r\n    \"type\" : \"WITHDRAW\",\r\n    \"description\" : \"withdraw B\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Transfer 400 from B to A",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"accountId\": \"{{account_B}}\",\r\n    \"transferAccountId\": \"{{account_A}}\",\r\n    \"sum\": 400,\r\n    \"type\" : \"TRANSFER\",\r\n    \"description\" : \"transfer 400\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Topup 800 for B",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"accountId\": \"{{account_B}}\",\r\n    \"sum\": 800,\r\n    \"type\" : \"TOP_UP_BALANCE\",\r\n    \"description\" : \"First time topup for B\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getAccount A",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5d5bcf18-4465-4659-8096-51c96258e815",
+								"exec": [
+									"pm.test(\"A\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.balance).to.eql(2900);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/app/v1/account/{{account_A}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"account",
+								"{{account_A}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get Account B",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "94dfb8a9-4294-4c6c-be85-653452bf7c97",
+								"exec": [
+									"pm.test(\"B\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.balance).to.eql(1100);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/app/v1/account/{{account_B}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"account",
+								"{{account_B}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getAllOperation A",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ca125f73-fe03-4290-ba56-562de947d5e0",
+								"exec": [
+									"pm.test(\"A\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.eql(2);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation/account/{{account_A}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation",
+								"account",
+								"{{account_A}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getAllOperation B",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ca125f73-fe03-4290-ba56-562de947d5e0",
+								"exec": [
+									"pm.test(\"B\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.eql(3);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation/account/{{account_B}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation",
+								"account",
+								"{{account_B}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "OperationCollection",
+			"item": [
+				{
+					"name": "Account create",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2f1dc4c6-644d-40c1-a3b3-714637c6531a",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    var jsonData = pm.response.json();",
+									"    pm.globals.set(\"account_id\", jsonData.id);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"balance\": 100,\n\t\"name\" : \"Rodion\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/account",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"account"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getAllOperation",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation/account/{{account_id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation",
+								"account",
+								"{{account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getAccount",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/app/v1/account/{{account_id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"account",
+								"{{account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "topup",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"accountId\": \"{{account_id}}\",\r\n    \"sum\": 50,\r\n    \"type\" : \"TOP_UP_BALANCE\",\r\n    \"description\" : \"for work\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "withdraw",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"accountId\": \"{{account_id}}\",\r\n    \"sum\": 50,\r\n    \"type\" : \"WITHDRAW\",\r\n    \"description\" : \"for work\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "transfer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"accountId\": \"{{account_id}}\",\r\n    \"transferAccountId\": \"324fcde1-410b-47fd-a9fd-1a93a9eddf3e\",\r\n    \"sum\": 50,\r\n    \"type\" : \"TRANSFER\",\r\n    \"description\" : \"for work\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/app/v1/operation",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"app",
+								"v1",
+								"operation"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	]
+}
